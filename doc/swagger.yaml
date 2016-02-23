@@ -1,0 +1,165 @@
+swagger: '2.0'
+info:
+  version: 1.0.0-ALPHA1
+  title: 'Roomez'
+paths:
+  /users:
+    get:
+      description: |
+        Gets `User` objects. Does a search by a name or email. The name search is a partial search, but the email must be exact.
+      parameters:
+        - name: name
+          in: query
+          description: The full name of the user. 
+          required: false
+          type: string
+        - name: email
+          in: query
+          description: The email of the user.
+          required: false
+          type: string
+      responses:
+        200:
+          description: Successful response
+          schema:
+            $ref: "#/definitions/Users"
+        400: 
+          description: Missing either name or email, Invalid email
+        404:
+          description: Not found
+        500:
+          description: Unexpected error
+    post:
+      description:  |
+        Creates a new `User`
+      parameters:
+        - name: Authorization
+          in: header
+          type: string
+          required: true
+          description: The username and password in base64 format using HTTP Basic Authorization. `Basic base64(username:password)`. For Facebook, the header is `Fb=token` and Google `Google=token`
+      responses:
+        201:
+          description: Created
+          schema:
+            $ref: "#/definitions/CreatedUser"
+        400:
+          description: Invalid parameters in request, or invalid base64 string.
+        403: 
+          description: Invalid Facebook or Google token
+        409:
+          description: User already exists with the given email
+        500:
+          description: Unexpected error
+  /users/{userId}:
+    get:
+      description: |
+        Gets a single `User` based on user ID.
+      parameters:
+        - name: userId
+          in: path
+          type: string
+          required: true
+          description: The user id.
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/User"
+        400:
+          description: Invalid parameters in request
+        403: 
+          description: Invalid access token
+        404:
+          description: Not found
+        500:
+          description: Unexpected error
+    put:
+      description: |
+        Updates a single `User`.
+      parameters:
+        - name: userId
+          in: path
+          type: string
+          required: true
+          description: The user id.
+        - name: user
+          in: body
+          description: The user to update
+          required: true
+          schema:
+            $ref: '#/definitions/User'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/User"
+        400:
+          description: Invalid parameters in request
+        403: 
+          description: Invalid access token
+        404:
+          description: Not found
+        500:
+          description: Unexpected error
+    delete:
+      description: |
+        Deletes a single `User` from.
+      parameters:
+        - name: userId
+          in: path
+          type: string
+          required: true
+          description: The user id.
+      responses:
+        200:
+          description: OK
+        400:
+          description: Invalid parameters in request
+        403: 
+          description: Invalid access token
+        404:
+          description: Not found
+        500:
+          description: Unexpected error
+
+definitions:
+  ExternalUser:
+    properties:
+      userId: 
+        type: string
+        description: The external user id for the user
+      userType:
+        type: string
+        description: The type of the user (Fb, Google)
+  User:
+    type: object
+    properties:
+      id:
+        type: string
+        description: The id of the user
+      name:
+        type: string
+        description: The name of the user
+      email:
+        type: string
+        description: Email of the user.
+      createdOn:
+        type: string
+        description: When the user was created
+      externalUser:
+        required: false
+        type: object
+        $ref: "#/definitions/ExternalUser"
+  CreatedUser:
+    allOf:
+    - $ref: '#/definitions/User'
+    - type: object
+      properties:
+        token:
+          type: string
+          description: Contains the JWT token that was generated for the user
+  Users:
+    type: array
+    items:
+      $ref: "#/definitions/User"
